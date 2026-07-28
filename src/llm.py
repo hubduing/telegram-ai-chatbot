@@ -19,7 +19,10 @@ class LLMClient(Protocol):
 
 class OpenAICompatibleClient:
     def __init__(self, api_key: str, base_url: str, model: str) -> None:
-        self._client = AsyncOpenAI(api_key=api_key, base_url=base_url)
+        self._client = AsyncOpenAI(
+            api_key=api_key,
+            base_url=base_url,
+        )
         self._model = model
         self._max_retries = 3
         self._retry_delay = 1.0
@@ -35,26 +38,61 @@ class OpenAICompatibleClient:
                     max_tokens=1024,
                     temperature=0.7,
                 )
+
                 return response.choices[0].message.content or "..."
 
-            except RateLimitError:
+            except RateLimitError as e:
                 wait = self._retry_delay * (2 ** attempt)
-                logger.warning("Rate limited, retrying in %.1fs (attempt %d/%d)", wait, attempt + 1, self._max_retries)
-                await asyncio.sleep(wait)
-                last_exception = RateLimitError
 
-            except APITimeoutError:
-                wait = self._retry_delay * (2 ** attempt)
-                logger.warning("API timeout, retrying in %.1fs (attempt %d/%d)", wait, attempt + 1, self._max_retries)
+                logger.warning(
+                    "Rate limited, retrying in %.1fs (attempt %d/%d)",
+                    wait,
+                    attempt + 1,
+                    self._max_retries,
+                )
+
+                last_exception = e
                 await asyncio.sleep(wait)
-                last_exception = APITimeoutError
+
+            except APITimeoutError as e:
+                wait = self._retry_delay * (2 ** attempt)
+
+                logger.warning(
+                    "API timeout, retrying in %.1fs (attempt %d/%d)",
+                    wait,
+                    attempt + 1,
+                    self._max_retries,
+                )
+
+                last_exception = e
+                await asyncio.sleep(wait)
 
             except APIError as e:
-                last_exception = e
-                logger.error("OpenAI API error: %s", e)
-                break
+                logger.exception("LLM API returned an error")
 
-        raise last_exception or RuntimeError("LLM request failed after retries")
+                print("\n" + "=" * 60)
+                print("OPENROUTER / OPENAI API ERROR")
+                print("=" * 60)
+                print(repr(e))
+                print("=" * 60 + "\n")
+
+                raise
+
+            except Exception as e:
+                logger.exception("Unexpected error while requesting LLM")
+
+                print("\n" + "=" * 60)
+                print("UNEXPECTED ERROR")
+                print("=" * 60)
+                print(repr(e))
+                print("=" * 60 + "\n")
+
+                raise
+
+        if last_exception:
+            raise last_exception
+
+        raise RuntimeError("LLM request failed after retries")
 
 
 PROVIDERS: dict[str, type[OpenAICompatibleClient]] = {
@@ -68,6 +106,7 @@ def create_llm() -> OpenAICompatibleClient | None:
         return None
 
     provider_cls = PROVIDERS.get(settings.llm_provider)
+
     if provider_cls is None:
         raise ValueError(
             f"Unknown LLM provider: {settings.llm_provider}. "
