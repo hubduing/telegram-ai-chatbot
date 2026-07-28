@@ -67,26 +67,12 @@ class OpenAICompatibleClient:
                 last_exception = e
                 await asyncio.sleep(wait)
 
-            except APIError as e:
+            except APIError:
                 logger.exception("LLM API returned an error")
-
-                print("\n" + "=" * 60)
-                print("OPENROUTER / OPENAI API ERROR")
-                print("=" * 60)
-                print(repr(e))
-                print("=" * 60 + "\n")
-
                 raise
 
-            except Exception as e:
+            except Exception:
                 logger.exception("Unexpected error while requesting LLM")
-
-                print("\n" + "=" * 60)
-                print("UNEXPECTED ERROR")
-                print("=" * 60)
-                print(repr(e))
-                print("=" * 60 + "\n")
-
                 raise
 
         if last_exception:

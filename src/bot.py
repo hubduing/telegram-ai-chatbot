@@ -88,8 +88,8 @@ async def handle_message(message: types.Message) -> None:
         await add_message(user_id, "assistant", reply)
         await message.answer(reply, parse_mode=ParseMode.MARKDOWN)
 
-    except Exception as e:
-        logger.error("Error processing message from %s: %s", user_id, e)
+    except Exception:
+        logger.exception("Error processing message from user %s", user_id)
         await message.answer(
             "😔 Sorry, an error occurred while processing your request.\n"
             "Please try again later.\n\n"
