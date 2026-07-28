@@ -1,107 +1,148 @@
-# Telegram AI Bot
+# Telegram AI Chatbot 🤖
 
-Асинхронный Telegram-бот с поддержкой различных LLM-провайдеров (OpenAI, OpenRouter и других OpenAI-совместимых API).
+An asynchronous Telegram bot powered by OpenAI-compatible LLM APIs (OpenRouter, OpenAI, and more).
 
-## Возможности
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
+[![aiogram](https://img.shields.io/badge/aiogram-3.x-blue)](https://docs.aiogram.dev/)
 
-- Отправка сообщений в LLM (OpenAI / OpenRouter / любые OpenAI-совместимые API)
-- Хранение истории диалога в SQLite (контекст сохраняется после перезапуска)
-- Автоматическая очистка старого контекста (не более N последних сообщений)
-- Команда `/clear` для очистки истории пользователя
-- Индикатор "печатает..." во время ожидания ответа
-- Легко добавлять новых провайдеров (Ollama, Groq, Together AI и др.)
+## Features
 
-## Требования
+- **Multi-provider LLM support** — works with OpenRouter, OpenAI, and any OpenAI-compatible API
+- **Conversation memory** — remembers last N messages per user (configurable, stored in SQLite)
+- **Persistent history** — context survives bot restarts thanks to SQLite
+- **Auto-cleanup** — old messages are automatically trimmed to stay within token limits
+- **Typing indicator** — shows "typing..." while waiting for the LLM response
+- **Echo fallback** — works even without an API key (echo mode)
+- **Extensible** — add new providers by editing a single file
+- **Fully async** — all I/O operations use `async/await`
+
+## Requirements
 
 - Python 3.10+
-- Telegram Bot Token (получить у [@BotFather](https://t.me/BotFather))
-- API ключ от LLM-провайдера
+- Telegram Bot Token ([@BotFather](https://t.me/BotFather))
+- API key from an LLM provider (OpenRouter recommended for free tier)
 
-## Быстрый старт с OpenRouter (бесплатно)
+## Quick Start with OpenRouter (Free)
 
-### 1. Регистрация на OpenRouter
+### 1. Register on OpenRouter
 
-1. Перейдите на [openrouter.ai](https://openrouter.ai)
-2. Зарегистрируйтесь (можно через GitHub или Google)
-3. Пополните баланс (минимально $1) или используйте бесплатные модели
+1. Go to [openrouter.ai](https://openrouter.ai)
+2. Sign up (GitHub / Google / email)
+3. Top up your balance ($1 minimum) or use free models
 
-### 2. Получение API Key
+### 2. Get an API Key
 
-1. Войдите в аккаунт OpenRouter
-2. Перейдите в раздел **Keys** (https://openrouter.ai/keys)
-3. Нажмите **Create Key**
-4. Скопируйте полученный ключ
+1. Log in to your OpenRouter account
+2. Navigate to **Keys** → [https://openrouter.ai/keys](https://openrouter.ai/keys)
+3. Click **Create Key**
+4. Copy the key (starts with `sk-or-v1-`)
 
-### 3. Настройка проекта
+### 3. Clone and Configure
 
 ```bash
-# Клонировать или скопировать файлы проекта
-# Установить зависимости
+# Clone the repository
+git clone https://github.com/hubduing/telegram-ai-chatbot.git
+cd telegram-ai-chatbot
+
+# Install dependencies
 pip install -r requirements.txt
 
-# Создать файл .env из примера
+# Create .env from the example
 cp .env.example .env
 ```
 
-### 4. Заполнение .env
+### 4. Edit `.env`
 
-Отредактируйте файл `.env`:
-
-```
-BOT_TOKEN=your_telegram_bot_token_here        # Токен от @BotFather
-LLM_PROVIDER=openrouter                        # Провайдер
-LLM_API_KEY=sk-or-v1-...                       # Ваш ключ OpenRouter
-LLM_BASE_URL=https://openrouter.ai/api/v1      # Базовый URL
-LLM_MODEL=deepseek/deepseek-chat-v3-0324:free  # Бесплатная модель
-MAX_HISTORY_MESSAGES=15                        # Глубина контекста
+```ini
+BOT_TOKEN=1234567890:ABCdefGHIjklmNOPqrstUVwxyz        # From @BotFather
+LLM_PROVIDER=openrouter                                 # Provider name
+LLM_API_KEY=sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx   # Your OpenRouter key
+LLM_BASE_URL=https://openrouter.ai/api/v1               # API endpoint
+LLM_MODEL=deepseek/deepseek-chat-v3-0324:free           # Free model
+MAX_HISTORY_MESSAGES=15                                 # Context depth
 ```
 
-### 5. Запуск
+### 5. Run
 
 ```bash
-python bot.py
+python -m src
+# or
+python run.py
 ```
 
-Бот запущен и готов к работе!
+## Usage with OpenAI
 
-## Использование с OpenAI
+Change `.env` to:
 
-Просто измените параметры в `.env`:
-
-```
+```ini
 LLM_PROVIDER=openai
-LLM_API_KEY=sk-...                              # Ваш OpenAI API ключ
+LLM_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 LLM_BASE_URL=https://api.openai.com/v1
 LLM_MODEL=gpt-3.5-turbo
 ```
 
-## Команды
+## Commands
 
-- `/start` — начать работу с ботом
-- `/help` — показать справку
-- `/clear` — очистить историю диалога
+| Command  | Description                    |
+|----------|--------------------------------|
+| `/start` | Start working with the bot     |
+| `/help`  | Show available commands        |
+| `/clear` | Clear conversation history     |
 
-## Добавление нового провайдера
-
-Чтобы добавить нового провайдера (например, Ollama, Groq, Together AI),
-нужно изменить только файл `services/llm.py`:
-
-1. Создайте класс-клиент, реализующий метод `async def chat(self, messages) -> str`
-2. Зарегистрируйте его в словаре `PROVIDERS`
-3. Укажите провайдер в `.env`
-
-Код бота (`bot.py`) менять не нужно.
-
-## Структура проекта
+## Project Structure
 
 ```
-├── bot.py                 # Основная логика Telegram-бота
-├── config.py              # Загрузка конфигурации из .env
-├── database.py            # Работа с SQLite (история диалогов)
-├── services/
-│   ├── __init__.py
-│   └── llm.py             # Унифицированный LLM-клиент
-├── .env.example           # Пример файла конфигурации
+telegram-ai-chatbot/
+├── src/
+│   ├── __init__.py          # Package marker
+│   ├── __main__.py          # Entry point (python -m src)
+│   ├── bot.py               # Telegram bot logic (handlers)
+│   ├── config.py            # Settings from .env (dataclass)
+│   ├── database.py          # SQLite wrapper (history storage)
+│   └── llm.py               # Unified LLM client (providers)
+├── .env.example             # Configuration template
 ├── .gitignore
+├── LICENSE                  # MIT License
+├── README.md
 ├── requirements.txt
-└── README.md
+└── run.py                   # Alternative entry point
+```
+
+## Adding a New Provider
+
+Edit only `src/llm.py`:
+
+1. Create a class implementing `LLMClient` protocol (must have `async def chat(self, messages) -> str`)
+2. Register it in the `PROVIDERS` dict
+3. Set `LLM_PROVIDER` in `.env`
+
+No changes to `bot.py` or any other file are required.
+
+## Screenshots
+
+> *Screenshots coming soon. Contributions welcome!*
+
+## Future Plans
+
+- [ ] Support for Ollama (local models)
+- [ ] Support for Groq
+- [ ] Support for Together AI
+- [ ] Streaming responses
+- [ ] Admin commands
+- [ ] Docker support
+- [ ] CI/CD pipeline
+
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request.
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
